@@ -1,0 +1,66 @@
+{
+  "manifest_version": 3,
+  "name": "markmyprompt",
+  "version": "1.0.0",
+  "description": "Sync your favorite prompts from ChatGPT, Gemini, X Posts and Perplexity to one single platform",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": [
+    "https://chat.openai.com/*",
+    "https://chatgpt.com/*",
+    "https://gemini.google.com/*",
+    "https://x.com/*",
+    "https://twitter.com/*",
+    "https://www.perplexity.ai/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://chat.openai.com/*", "https://chatgpt.com/*"],
+      "js": ["content/utils.js", "content/chatgpt.js"],
+      "css": ["content/styles.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://gemini.google.com/*"],
+      "js": ["content/utils.js", "content/gemini.js"],
+      "css": ["content/styles.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://x.com/*", "https://twitter.com/*"],
+      "js": ["content/utils.js", "content/twitter.js"],
+      "css": ["content/styles.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://x.com/i/grok*"],
+      "js": ["content/utils.js", "content/grok.js"],
+      "css": ["content/styles.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://www.perplexity.ai/*"],
+      "js": ["content/utils.js", "content/perplexity.js"],
+      "css": ["content/styles.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_page": "options/options.html",
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

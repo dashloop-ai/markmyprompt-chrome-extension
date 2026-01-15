@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>mark my prompt - Settings</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="logo-container">
+          <img
+            src="../icons/logo-icon-square.png"
+            alt="mark my prompt"
+            class="logo"
+          />
+          <h1>mark my prompt Sync</h1>
+        </div>
+        <p class="subtitle">Configure your extension settings</p>
+      </header>
+
+      <div class="card">
+        <h2>API Configuration</h2>
+
+        <div class="form-group">
+          <label for="baseUrl">Base URL</label>
+          <input
+            type="text"
+            id="baseUrl"
+            placeholder="https://api-backend-us01.markmyprompt.com"
+            value="https://api-backend-us01.markmyprompt.com"
+          />
+          <small>The URL of your mark my prompt backend instance</small>
+        </div>
+
+        <div class="form-group">
+          <label for="apiKey">API Key *</label>
+          <input
+            type="password"
+            id="apiKey"
+            placeholder="Enter your mark my prompt API key"
+          />
+          <small>Generate an API key from your mark my prompt dashboard</small>
+        </div>
+
+        <div class="button-group">
+          <button id="verifyBtn" class="btn btn-primary">
+            Verify & Activate
+          </button>
+          <button id="saveBtn" class="btn btn-secondary">Save Settings</button>
+        </div>
+
+        <div id="message" class="message hidden"></div>
+      </div>
+
+      <div class="card status-card">
+        <h2>Extension Status</h2>
+        <div class="status-info">
+          <div class="status-item">
+            <span class="status-label">Status:</span>
+            <span id="status" class="status-value inactive">Inactive</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">API Key:</span>
+            <span id="apiKeyStatus" class="status-value">Not configured</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card info-card">
+        <h2>How to Use</h2>
+        <ol>
+          <li>
+            Generate an API key from your mark my prompt dashboard (Settings →
+            API Keys)
+          </li>
+          <li>Enter your API key and base URL above</li>
+          <li>Click "Verify & Activate" to activate the extension</li>
+          <li>
+            Visit ChatGPT or Gemini or X or Perplexity and look for the sync
+            icon next to your prompts. Support for more LLMs coming soon.
+          </li>
+          <li>
+            Click the sync icon to save prompts to your mark my prompt library
+          </li>
+        </ol>
+      </div>
+
+      <footer>
+        <p>
+          mark my prompt v1.0.0 |
+          <a href="https://markmyprompt.com" target="_blank">Documentation</a>
+        </p>
+      </footer>
+    </div>
+
+    <script src="options.js"></script>
+  </body>
+</html>
