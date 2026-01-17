@@ -6,7 +6,7 @@
   right: 8px;
   width: 32px;
   height: 32px;
-  background: #f84f4f;
+  background: #f84f4f; /* Red color */
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -20,7 +20,7 @@
 }
 
 .promptean-sync-btn:hover {
-  background: #e03e3e;
+  background: #e03e3e; /* Darker red on hover */
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(248, 79, 79, 0.3);
 }

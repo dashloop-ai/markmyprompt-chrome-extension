@@ -23,6 +23,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
   
+  if (request.action === 'syncAnswer') {
+    syncAnswer(request.answer, request.source)
+      .then(result => sendResponse({ success: true, result }))
+      .catch(error => sendResponse({ success: false, error: error.message }));
+    return true;
+  }
+  
   if (request.action === 'getConfig') {
     getConfig()
       .then(config => sendResponse({ success: true, config }))
@@ -155,6 +162,59 @@ async function syncPromptWithImage(imageData, imageFormat, source) {
     }
   } catch (error) {
     throw new Error(`Image sync failed: ${error.message}`);
+  }
+}
+
+// Sync answer to mark my prompt
+async function syncAnswer(answerContent, source) {
+  try {
+    // Get stored configuration
+    const config = await getConfig();
+    
+    if (!config.apiKey) {
+      throw new Error('API key not configured. Please set up the extension first.');
+    }
+    
+    if (!config.isActive) {
+      throw new Error('Extension is not activated. Please verify your API key.');
+    }
+    
+    const baseUrl = config.baseUrl || 'http://localhost:7070';
+    
+    // Create answer object with source tag
+    const answerData = {
+      answers: [
+        {
+          content: answerContent,
+          source: source, // gemini, chatgpt, or perplexity
+          is_public: false,
+          tags: [source] // Tag with source platform
+        }
+      ]
+    };
+    
+    const response = await fetch(`${baseUrl}/api/keys/sync/answers`, {
+      method: 'POST',
+      headers: {
+        'X-API-Key': config.apiKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(answerData)
+    });
+    
+    if (response.ok) {
+      const result = await response.json();
+      return {
+        success: true,
+        created: result.created,
+        message: 'Answer synced successfully!'
+      };
+    } else {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to sync answer');
+    }
+  } catch (error) {
+    throw new Error(`Sync failed: ${error.message}`);
   }
 }
 

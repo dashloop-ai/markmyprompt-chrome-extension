@@ -32,11 +32,135 @@ console.log("🔵 MMP: ChatGPT content script loaded");
 
   // Track processed elements
   const processedElements = new WeakSet();
+  const processedAnswers = new WeakSet();
 
   function debugLog(...args) {
     if (DEBUG) {
       console.log("[MMP ChatGPT]", ...args);
     }
+  }
+
+  // Add sync buttons to AI answers
+  function addAnswerSyncButtons() {
+    debugLog("Scanning for AI answers...");
+
+    // Try multiple selector strategies for ChatGPT's assistant messages
+    const answerSelectors = [
+      '[data-message-author-role="assistant"]',
+      '[data-testid*="conversation-turn"][data-testid*="assistant"]',
+      '.group.w-full[class*="assistant"]',
+      'div[class*="agent-turn"]:has(div[class*="assistant"])',
+    ];
+
+    let assistantMessages = [];
+    let usedSelector = "";
+
+    // Try each selector until we find messages
+    for (const selector of answerSelectors) {
+      try {
+        const elements = document.querySelectorAll(selector);
+        if (elements.length > 0) {
+          assistantMessages = Array.from(elements);
+          usedSelector = selector;
+          debugLog(
+            `Found ${elements.length} assistant messages using selector: ${selector}`
+          );
+          break;
+        }
+      } catch (e) {
+        debugLog(`Selector failed: ${selector}`, e);
+        continue;
+      }
+    }
+
+    // Fallback: Look for alternating message pattern (assistant messages are typically at odd indices)
+    if (assistantMessages.length === 0) {
+      debugLog("Using fallback answer detection...");
+      const allGroups = document.querySelectorAll(
+        '.group.w-full, [class*="turn"], [class*="message"]'
+      );
+      debugLog(`Found ${allGroups.length} potential message containers`);
+
+      assistantMessages = Array.from(allGroups).filter((el, index) => {
+        // Assistant messages are typically at odd indices (1, 3, 5...) in alternating pattern
+        return index % 2 === 1;
+      });
+
+      debugLog(`Fallback found ${assistantMessages.length} assistant messages`);
+    }
+
+    if (assistantMessages.length === 0) {
+      debugLog("No assistant messages found on page");
+      return;
+    }
+
+    assistantMessages.forEach(async (messageElement) => {
+      // Skip if already processed
+      if (processedAnswers.has(messageElement)) {
+        return;
+      }
+
+      // Find the content container - try multiple selectors
+      let contentContainer = messageElement.querySelector(
+        '[class*="markdown"], [class*="markdown-body"], .prose'
+      );
+      if (!contentContainer) {
+        contentContainer = messageElement.querySelector(".text-base");
+      }
+      if (!contentContainer) {
+        contentContainer = messageElement.querySelector(".whitespace-pre-wrap");
+      }
+      if (!contentContainer) {
+        // Fallback: use the message element itself
+        contentContainer = messageElement;
+      }
+
+      // Extract answer content
+      const answerText = await utils.extractAnswerContent(contentContainer);
+      if (!answerText || answerText.length < 10) {
+        debugLog("Skipping answer: text too short or empty");
+        return;
+      }
+
+      debugLog(`Processing answer: "${answerText.substring(0, 50)}..."`);
+
+      // Make sure we have a valid container
+      let container = messageElement;
+
+      // Try to find a better parent container
+      const potentialParent = messageElement.closest(
+        '.group, [class*="turn"], [class*="message-wrap"]'
+      );
+      if (potentialParent) {
+        container = potentialParent;
+      }
+
+      // Add container class and positioning
+      if (!container.classList.contains("promptean-container")) {
+        container.classList.add("promptean-container");
+        container.style.position = "relative";
+      }
+
+      // Create and add sync button
+      const syncButton = utils.createSyncButton();
+      syncButton.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        const answerContent = await utils.extractAnswerContent(contentContainer);
+        if (answerContent && answerContent.length >= 10) {
+          utils.syncAnswer(answerContent, syncButton);
+        } else {
+          utils.showToast("Failed to extract answer content", "error");
+        }
+      });
+
+      container.appendChild(syncButton);
+      processedAnswers.add(messageElement);
+      debugLog("✓ Answer sync button added successfully");
+    });
+
+    debugLog(
+      `Answer scan complete. Processed ${processedAnswers.size} total answers`
+    );
   }
 
   // Add sync buttons to existing user prompts
@@ -168,6 +292,7 @@ console.log("🔵 MMP: ChatGPT content script loaded");
     clearTimeout(observer.timeout);
     observer.timeout = setTimeout(() => {
       addSyncButtons();
+      addAnswerSyncButtons();
     }, 300);
   });
 
@@ -179,7 +304,11 @@ console.log("🔵 MMP: ChatGPT content script loaded");
 
   // Initial scan
   addSyncButtons();
+  addAnswerSyncButtons();
 
   // Re-scan periodically to catch any missed messages
-  setInterval(addSyncButtons, 2000);
+  setInterval(() => {
+    addSyncButtons();
+    addAnswerSyncButtons();
+  }, 2000);
 })();

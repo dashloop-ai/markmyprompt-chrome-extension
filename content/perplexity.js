@@ -34,11 +34,211 @@ console.log("🔍 MMP: Perplexity content script loaded");
 
   // Track processed elements
   const processedElements = new WeakSet();
+  const processedAnswers = new WeakSet();
 
   function debugLog(...args) {
     if (DEBUG) {
       console.log("[MMP Perplexity]", ...args);
     }
+  }
+
+  // Add sync buttons to AI answers/responses
+  function addAnswerSyncButtons() {
+    debugLog("Scanning for AI answers...");
+
+    // Perplexity shows answers in specific containers
+    const answerSelectors = [
+      '[class*="answer"]',
+      '[class*="response"]',
+      '[class*="result"]',
+      '[class*="content"]',
+      'div[class*="prose"]',
+      'div[class*="markdown"]',
+    ];
+
+    let answerElements = [];
+    for (const selector of answerSelectors) {
+      try {
+        const elements = document.querySelectorAll(selector);
+        debugLog(`Trying selector "${selector}": found ${elements.length} elements`);
+
+        if (elements.length > 0) {
+          // Filter for elements that contain actual answer content
+          const validAnswers = Array.from(elements).filter((element) => {
+            const text = element.innerText || element.textContent || "";
+            const trimmedText = text.trim();
+
+            // Must have meaningful text length for an answer
+            if (!trimmedText || trimmedText.length < 50) {
+              return false;
+            }
+
+            // Skip very short text (likely UI elements)
+            if (trimmedText.length < 50) {
+              return false;
+            }
+
+            // Check if this looks like an answer (longer, structured content)
+            const isLongAnswer = trimmedText.length > 100;
+            const hasStructuredContent = trimmedText.includes('\n') || trimmedText.includes('. ') || trimmedText.includes('•');
+            
+            return isLongAnswer && hasStructuredContent;
+          });
+
+          if (validAnswers.length > 0) {
+            answerElements = validAnswers;
+            debugLog(`Found ${validAnswers.length} valid answers using selector: ${selector}`);
+            break;
+          }
+        }
+      } catch (e) {
+        debugLog(`Selector failed: ${selector}`, e);
+        continue;
+      }
+    }
+
+    // Fallback: Look for main content areas
+    if (answerElements.length === 0) {
+      debugLog("Using fallback detection for Perplexity answers...");
+      const mainContent = document.querySelector('main, [role="main"], [class*="main-content"]');
+      if (mainContent) {
+        const allDivs = mainContent.querySelectorAll('div');
+        answerElements = Array.from(allDivs).filter((element) => {
+          const text = element.innerText || element.textContent || "";
+          const trimmedText = text.trim();
+          return trimmedText.length > 100 && trimmedText.length < 50000;
+        });
+      }
+      debugLog(`Fallback found ${answerElements.length} potential answers`);
+    }
+
+    debugLog(`Total answers found: ${answerElements.length}`);
+
+    if (answerElements.length === 0) {
+      debugLog("No answers found on page");
+      return;
+    }
+
+    let buttonCount = 0;
+
+    answerElements.forEach(async (element, index) => {
+      // Skip if already processed
+      if (processedAnswers.has(element)) {
+        return;
+      }
+
+      // Extract answer content
+      const answerText = await utils.extractAnswerContent(element);
+      if (!answerText || answerText.length < 50) {
+        debugLog(`Skipping answer ${index + 1}: content too short`);
+        return;
+      }
+
+      debugLog(
+        `Processing ANSWER ${index + 1}/${answerElements.length}: "${answerText.substring(0, 100)}..."`
+      );
+
+      // Find a suitable container for the sync button
+      let container = element;
+
+      // Look for the answer container in the parent hierarchy
+      let parent = element.parentElement;
+      let depth = 0;
+      while (parent && depth < 8) {
+        const className = parent.className || "";
+        const hasAnswerClasses =
+          className.includes("answer") ||
+          className.includes("response") ||
+          className.includes("result") ||
+          className.includes("prose") ||
+          className.includes("rounded-2xl");
+
+        // Look for a container that's large enough and has answer-related classes
+        if (
+          (hasAnswerClasses || parent.offsetWidth > 200) &&
+          parent.offsetHeight > 100
+        ) {
+          container = parent;
+          debugLog(
+            `Found suitable container at depth ${depth}:`,
+            parent.tagName,
+            parent.className
+          );
+          break;
+        }
+        parent = parent.parentElement;
+        depth++;
+      }
+
+      // If we couldn't find a good container, use a higher-level parent
+      if (container === element && element.parentElement) {
+        let fallbackParent = element.parentElement;
+        for (let i = 0; i < 3 && fallbackParent; i++) {
+          if (fallbackParent.offsetWidth > 200) {
+            container = fallbackParent;
+            debugLog("Using fallback container:", fallbackParent.tagName);
+            break;
+          }
+          fallbackParent = fallbackParent.parentElement;
+        }
+      }
+
+      // Add container class and positioning
+      if (!container.classList.contains("promptean-container")) {
+        container.classList.add("promptean-container");
+        container.style.position = "relative";
+      }
+
+      // Create and add sync button (initially hidden)
+      const syncButton = createPerplexitySyncButton();
+      syncButton.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const answerContent = await utils.extractAnswerContent(element);
+        if (answerContent && answerContent.length >= 50) {
+          utils.syncAnswer(answerContent, syncButton);
+        } else {
+          utils.showToast("Failed to extract answer content", "error");
+        }
+      });
+
+      // Position the button in the top-right corner and hide it initially
+      syncButton.style.position = "absolute";
+      syncButton.style.top = "8px";
+      syncButton.style.right = "8px";
+      syncButton.style.zIndex = "1000";
+      syncButton.style.opacity = "0";
+      syncButton.style.visibility = "hidden";
+      syncButton.style.transition = "opacity 0.2s ease, visibility 0.2s ease";
+
+      // Add hover effects to the container
+      container.addEventListener("mouseenter", () => {
+        syncButton.style.opacity = "0.8";
+        syncButton.style.visibility = "visible";
+      });
+
+      container.addEventListener("mouseleave", () => {
+        // Only hide if not currently syncing or synced
+        if (
+          !syncButton.classList.contains("syncing") &&
+          !syncButton.classList.contains("synced")
+        ) {
+          syncButton.style.opacity = "0";
+          syncButton.style.visibility = "hidden";
+        }
+      });
+
+      container.appendChild(syncButton);
+      processedAnswers.add(element);
+      buttonCount++;
+
+      debugLog(
+        `Added hover sync button ${buttonCount} to ANSWER:`,
+        answerText.substring(0, 50) + "..."
+      );
+    });
+
+    debugLog(`Answer scan complete. Added ${buttonCount} sync buttons`);
   }
 
   // Add sync buttons to user prompts
@@ -380,6 +580,7 @@ console.log("🔍 MMP: Perplexity content script loaded");
     clearTimeout(observer.timeout);
     observer.timeout = setTimeout(() => {
       addSyncButtons();
+      addAnswerSyncButtons();
     }, 1000);
   });
 
@@ -390,10 +591,16 @@ console.log("🔍 MMP: Perplexity content script loaded");
   });
 
   // Initial scan after page loads
-  setTimeout(addSyncButtons, 3000);
+  setTimeout(() => {
+    addSyncButtons();
+    addAnswerSyncButtons();
+  }, 3000);
 
   // Re-scan periodically to catch any missed content
-  setInterval(addSyncButtons, 8000);
+  setInterval(() => {
+    addSyncButtons();
+    addAnswerSyncButtons();
+  }, 8000);
 
   debugLog("Perplexity content script initialization complete");
 })();
