@@ -1,12 +1,13 @@
 # mark my prompt - Chrome Extension
 
-A Chrome extension that allows you to sync prompts from ChatGPT, Gemini, X (Twitter), X Grok conversations, and Perplexity directly to your mark my prompt library.
+A Chrome extension that allows you to sync prompts and AI answers from ChatGPT, Gemini, X (Twitter), X Grok conversations, and Perplexity directly to your mark my prompt library.
 
 ![Supported Sites](img/chrome-extension-sites-covered.png)
 
 ## Features
 
 - ✅ **One-Click Sync**: Floating sync button appears next to each user prompt
+- ✅ **Answer Sync**: Copy AI responses and sync them via modal dialog on Gemini
 - ✅ **Multi-Platform Support**: Works on ChatGPT, Gemini, X (Twitter), X Grok conversations, and Perplexity
 - ✅ **API Key Authentication**: Secure authentication using mark my prompt API keys
 - ✅ **Auto-Tagging**: Automatically tags prompts with source platform (chatgpt/gemini/twitter/grok/perplexity)
@@ -112,6 +113,7 @@ The sync button states:
 
 ### On Gemini (gemini.google.com)
 
+#### Syncing Prompts
 1. Open **Gemini** and start or continue a conversation
 2. **Hover over** any of your prompts (user queries)
 3. A **purple sync button** will appear in the top-right corner
@@ -119,6 +121,22 @@ The sync button states:
 5. A success notification will appear: **"✓ Prompt synced successfully!"**
 
 ![Gemini Sync](img/gemini-sync.png)
+
+#### Syncing Answers (AI Responses)
+1. Find an AI response you want to save
+2. Click Gemini's **copy button** (next to the response)
+3. Wait for Gemini's "Copied to clipboard" toast
+4. A **sync modal** will automatically appear asking: "Sync to mark my prompt?"
+5. Review the answer preview in the modal
+6. Click **"Sync Answer"** to save it to your library
+7. The answer will be synced with the `gemini` tag
+
+**Modal Features:**
+- Preview of the answer content (first 200 characters)
+- Cancel button to dismiss without syncing
+- Visual feedback: syncing spinner → success checkmark
+- Auto-closes after successful sync
+- Press ESC to close the modal
 
 ### On X (Twitter) (x.com / twitter.com)
 
@@ -386,7 +404,7 @@ markmyprompt-chrome-extension/
 
 ## Limitations
 
-- Only syncs **user input prompts** (not AI responses)
+- AI answer sync currently only available on **Gemini** (requires using copy button)
 - Requires **active internet connection** to mark my prompt backend
 - Synced prompts are **private by default** (change in mark my prompt web app)
 - Duplicate detection is **session-based** (resets on page reload)
@@ -395,7 +413,9 @@ markmyprompt-chrome-extension/
 ## Future Enhancements
 
 - [ ] Bulk sync all prompts in a conversation
-- [ ] Sync entire conversations (with AI responses)
+- [x] Sync AI responses/answers (available on Gemini)
+- [ ] Answer sync for ChatGPT and other platforms
+- [ ] Sync entire conversations (prompts + answers together)
 - [ ] Add more AI platforms (Claude, etc.)
 - [ ] Offline queue for sync operations
 - [ ] Custom tag selection before syncing

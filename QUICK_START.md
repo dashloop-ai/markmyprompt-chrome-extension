@@ -49,13 +49,20 @@ Get Promptean Sync up and running in 5 minutes!
 5. Click it!
 6. Toast notification: "✓ Prompt synced successfully!"
 
-#### On Gemini
+#### On Gemini - Sync Prompts
 1. Go to `https://gemini.google.com`
 2. Start a new chat or open existing one
 3. Hover over any of your prompts
 4. See the **purple sync button**?
 5. Click it!
 6. Toast notification: "✓ Prompt synced successfully!"
+
+#### On Gemini - Sync Answers (NEW!)
+1. Ask Gemini a question and wait for the response
+2. Click Gemini's **copy button** (next to the AI response)
+3. A **sync modal** will appear automatically
+4. Click **"Sync Answer"** in the modal
+5. Toast notification: "✓ Answer synced successfully!"
 
 ### 5. Verify in Promptean (30 seconds)
 
@@ -82,6 +89,7 @@ Get Promptean Sync up and running in 5 minutes!
 
 - ✅ Sync prompts from ChatGPT
 - ✅ Sync prompts from Gemini
+- ✅ Sync AI answers from Gemini (NEW!)
 - ✅ Organize prompts with tags in Promptean
 - ✅ Search and reuse your best prompts
 - ✅ Share prompts with others

@@ -24,6 +24,13 @@
 
   // Add sync buttons to existing user prompts (restore original functionality)
   function addSyncButtons() {
+    // Check if there's an actual conversation first
+    // Don't show buttons on empty/new chat screens
+    const hasConversation = document.querySelector('[class*="conversation"], [class*="chat"]');
+    if (!hasConversation) {
+      return; // Exit early if no conversation container exists
+    }
+
     // Gemini uses different selectors - try multiple patterns
     const selectors = [
       '[data-test-id="user-query"]',
@@ -57,6 +64,11 @@
       });
     }
 
+    // Only process if we actually found valid user messages
+    if (userMessages.length === 0) {
+      return; // Exit if no valid user messages found
+    }
+
     userMessages.forEach((messageElement) => {
       // Skip if already processed
       if (processedElements.has(messageElement)) {
@@ -66,6 +78,15 @@
       // Get the text content
       const promptText = messageElement.innerText.trim();
       if (!promptText || promptText.length < 5) {
+        return;
+      }
+
+      // Additional validation: skip if this looks like a placeholder or empty state
+      const lowerText = promptText.toLowerCase();
+      if (lowerText.includes('enter a prompt') || 
+          lowerText.includes('where should we start') ||
+          lowerText.includes('what can i help') ||
+          promptText.length < 10) {
         return;
       }
 
@@ -100,8 +121,20 @@
 
   // Monitor Gemini's copy button and toast for user-friendly answer sync
   function monitorCopyActivity() {
+    // Check if there's an actual conversation first
+    // Don't monitor buttons on empty/new chat screens
+    const hasConversation = document.querySelector('[class*="conversation"], [class*="chat"]');
+    if (!hasConversation) {
+      return; // Exit early if no conversation container exists
+    }
+
     // Find all copy buttons
     const copyButtons = document.querySelectorAll('button[data-test-id="copy-button"], button[mattooltip*="Copy"], button[aria-label*="Copy"]');
+    
+    // Only process if we found copy buttons
+    if (copyButtons.length === 0) {
+      return; // Exit if no copy buttons found
+    }
     
     copyButtons.forEach(copyButton => {
       // Skip if already monitoring this button

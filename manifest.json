@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "markmyprompt",
-  "version": "1.0.0",
-  "description": "Sync your favorite prompts from ChatGPT, Gemini, X Posts and Perplexity to one single platform",
+  "version": "1.1.0",
+  "description": "Sync your favorite prompts and AI answers from ChatGPT, Gemini, X Posts and Perplexity to one single platform",
   "permissions": ["storage", "activeTab"],
   "host_permissions": [
     "https://chat.openai.com/*",
