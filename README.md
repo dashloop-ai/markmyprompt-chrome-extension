@@ -429,7 +429,7 @@ This extension is part of the mark my prompt project.
 
 ## Support
 
-For issues, questions, or feature requests, please refer to the main mark my prompt documentation or open an issue in the repository.
+For issues, questions, or feature requests, please refer to the main mark my prompt documentation or open an issue in the repository and you can write to us at admin@dashloop.ai .
 
 ---
 
